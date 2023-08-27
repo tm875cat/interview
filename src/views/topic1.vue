@@ -13,9 +13,20 @@
     <div class="form_header">全部</div>
     <div class="form_content">
       <div class="list" v-for="(item, index) in all" :key="id">
-        <input type="checkbox" />{{ item.title }}
-        <button class="revise_btn">修改</button>
-        <button class="del_btn" @click="remove(index)">Del</button>
+        <input type="checkbox" v-model="item.completed" />{{ item.title }}
+        <button
+          class="revise_btn"
+          v-if="item.reviseshow"
+          @click="reviseshowchange(index)"
+        >
+          修改
+        </button>
+        <div class="renew_box" v-if="item.renewsinputshow">
+          <input type="text" v-model="item.renewtext" />
+          <button @click="renewlist(index)">變更</button>
+        </div>
+
+        <button class="del_btn" @click="dellist(index)">Del</button>
       </div>
     </div>
   </div>
@@ -24,43 +35,84 @@
 export default {
   data() {
     return {
-      all: [
-        { title: "買蘋果", finish: false, id: 1 },
-        { title: "買香蕉", finish: false, id: 2 },
-        { title: "買牛奶", finish: false, id: 3 },
-        { title: "吃飯", finish: false, id: 4 },
-      ],
+      all: [],
       addtext: "",
     };
   },
 
   methods: {
-    addlist() {//新增
-     
-      if(this.addtext==""){
-        alert ("請輸入代辦事項")
-        return
+    reviseshowchange(index) {
+      this.all[index].renewsinputshow = !this.all[index].renewsinputshow;
+      this.all[index].reviseshow = !this.all[index].reviseshow;
+    },
+    async addlist() {
+      if (this.addtext == "") {
+        alert("請輸入代辦事項");
+        return;
       }
-      this.all.push({
-        title: this.addtext,
-        finish:false,
-        id:this.all.length+1
-      });
-      this.addtext=""
-    },
-    remove(e){//刪除
-      this.all.splice(e,1)
-
-    },
-    adddata() {
       //jsonplaceholder新增
-      fetch("https://jsonplaceholder.typicode.com/posts", {
+      await fetch("https://jsonplaceholder.typicode.com/todos", {
         method: "POST",
         body: JSON.stringify({
-          price: 200,
-          title: "foo",
-          body: "bar",
-          userId: 1,
+          title: this.addtext,
+          completed: false,
+        }),
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      })
+        .then((response) => response.json())
+        // .then((json) => console.log(json));
+        .then((json) =>
+          this.all.push({
+            title: json.title,
+            completed: json.completed,
+            id: json.id,
+            renewsinputshow: false,
+            reviseshow: true,
+            renewtext: "",
+          })
+        )
+        .catch((error) => alert(error));
+      this.addtext = "";
+      console.log("all", this.all);
+    },
+
+    async dellist(index) {
+      //刪除
+
+      const delid = this.all[index].id;
+      //jsonplaceholder刪除
+      await fetch(`https://jsonplaceholder.typicode.com/todos/${delid}`, {
+        method: "DELETE",
+      });
+      this.all.splice(index, 1); //陣列刪除
+
+      // console.log("all", this.all);
+    },
+
+    async renewlist(index) {
+      //修改
+
+      this.all[index] = {
+        title: this.all[index].renewtext,
+        completed: this.all[index].completed,
+        id: this.all[index].id,
+        renewsinputshow: false,
+        reviseshow: true,
+        renewtext: "",
+      };
+      const delid = this.all[index].id;
+      console.log(delid);
+      await fetch(`https://jsonplaceholder.typicode.com/todos/200`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: this.all[index].renewtext,
+          completed: this.all[index].completed,
+          id: this.all[index].id,
+          renewsinputshow: false,
+          reviseshow: true,
+          renewtext: "",
         }),
         headers: {
           "Content-type": "application/json; charset=UTF-8",
@@ -70,9 +122,8 @@ export default {
         .then((json) => console.log(json));
     },
   },
-  mounted() {
-    // this.adddata();
-  },
+
+  mounted() {},
 };
 </script>
 <style scoped lang="scss">
@@ -103,6 +154,9 @@ header {
 
     .list {
       margin: 1rem;
+      .renew_box {
+        display: inline;
+      }
       .del_btn {
       }
     }
