@@ -26,9 +26,11 @@ const routes = [
     name: "topic3",
   },
 ];
-
+const routerHistory = createWebHistory('/interview/')
 const router = createRouter({
-  history: createWebHistory(),
+  // history: createWebHistory(),
+  history: routerHistory,
+
   routes,
 });
 
